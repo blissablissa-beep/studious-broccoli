@@ -1,1 +1,809 @@
-studious-broccoli
+<!doctype html>
+<html lang="ja">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover" />
+  <meta name="theme-color" content="#111111" />
+  <link rel="manifest" href="./manifest.webmanifest" />
+  <title>Recipe Vault (Private)</title>
+  <style>
+    :root {
+      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, "Hiragino Sans", "Noto Sans JP", sans-serif;
+    }
+    body { margin: 0; background: #0b0b0b; color: #f2f2f2; }
+    header {
+      position: sticky; top: 0;
+      background: rgba(10,10,10,.92);
+      backdrop-filter: blur(10px);
+      border-bottom: 1px solid #222;
+      z-index: 10;
+    }
+    .wrap { max-width: 980px; margin: 0 auto; padding: 14px 14px 28px; }
+    .row { display:flex; align-items:center; justify-content:space-between; gap: 12px; }
+    h1 { font-size: 18px; margin: 0; letter-spacing: .2px; }
+    .btn {
+      background:#1b1b1b; border:1px solid #2a2a2a; color:#fff;
+      padding:8px 10px; border-radius:10px; font-size:14px;
+    }
+    .btn:active { transform: translateY(1px); }
+    .btn.primary { border-color:#3a3a3a; background:#222; }
+    .sub { color:#bdbdbd; font-size:13px; margin-top: 6px; }
+    .tabs { display:flex; gap:8px; margin-top: 10px; }
+    .tab { flex: 0 0 auto; }
+    .grid { display:grid; grid-template-columns: 1fr; gap: 12px; margin-top: 14px; }
+    .card { background:#121212; border:1px solid #222; border-radius:14px; padding: 12px 12px; }
+    .title {
+      font-size: 18px;
+      font-weight: 800;
+      margin: 0 0 6px;
+      white-space: normal;
+      overflow-wrap: anywhere;
+    }
+    .title-row { display:flex; align-items:center; gap:8px; }
+    .chev { opacity:.65; font-size:16px; }
+    .pill {
+      display:inline-block; font-size:12px; padding:3px 8px;
+      border:1px solid #2a2a2a; border-radius:999px; color:#cfcfcf; margin-right:6px;
+      margin-top: 6px;
+    }
+    .label { color:#9a9a9a; font-size:12px; margin-top:10px; }
+    .txt { margin: 4px 0 0; white-space: pre-wrap; line-height: 1.5; }
+    ul.txt { white-space: normal; }
+    ul.txt li { white-space: pre-wrap; }
+    .muted { color:#8e8e8e; font-size:12px; }
+    footer { margin-top: 18px; color:#8e8e8e; font-size:12px; }
+    a { color:#9bd; word-break: break-all; }
+    .mono { font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, "Liberation Mono", "Courier New", monospace; }
+    .count { color:#cfcfcf; font-size:13px; }
+
+    /* favorite */
+    .right.meta {
+      display:flex;
+      flex-direction:column;
+      align-items:flex-end;
+      gap: 6px;
+    }
+    .bm-btn {
+      background: none;
+      border: none;
+      color: #ffd700;
+      font-size: 18px;
+      padding: 4px 6px;
+      cursor: pointer;
+      align-self: flex-end;
+    }
+    .bm-btn:focus-visible { outline: 2px solid #ffd70055; border-radius: 6px; }
+    .bm-btn:active { transform: scale(0.9); }
+
+    /* memo */
+    textarea.note {
+      width: 100%;
+      background: #0f0f0f;
+      border: 1px solid #2a2a2a;
+      color: #f2f2f2;
+      border-radius: 12px;
+      padding: 10px;
+      font-size: 14px;
+      line-height: 1.5;
+      resize: vertical;
+      min-height: 78px;
+      box-sizing: border-box;
+    }
+    .note-row { display:flex; gap:8px; margin-top: 8px; align-items:center; }
+    .note-row .btn { padding: 8px 10px; }
+
+    /* error box */
+    .error {
+      background: #2a0f0f;
+      border: 1px solid #5a1a1a;
+      color: #ffd6d6;
+      padding: 12px;
+      border-radius: 12px;
+      margin-bottom: 14px;
+      font-size: 14px;
+      line-height: 1.5;
+    }
+    .error.hidden { display:none; }
+    .error .err-actions { margin-top: 10px; display:flex; gap:8px; flex-wrap:wrap; }
+    .error .err-btn {
+      background:#1b1b1b;
+      border:1px solid #5a1a1a;
+      color:#ffd6d6;
+      padding:8px 10px;
+      border-radius:10px;
+      font-size:14px;
+    }
+    .error .err-btn:active { transform: translateY(1px); }
+
+    mark.hl {
+      background: rgba(255, 215, 0, .22);
+      color: inherit;
+      padding: 0 .12em;
+      border-radius: .25em;
+    }
+  </style>
+</head>
+
+<body>
+<header>
+  <div class="wrap">
+    <div class="row">
+      <div>
+        <h1 id="appTitle">Recipe Vault</h1>
+        <div class="sub" id="appSub">家庭用 / PWA / レシピ共有（#id=で個別URL）</div>
+      </div>
+      <button class="btn" id="shareBtn" title="今開いているレシピURLをコピー">共有</button>
+    </div>
+
+    <div class="tabs">
+      <button class="btn tab primary" id="tabAll">All</button>
+      <button class="btn tab" id="tabFav">★</button>
+      <span style="flex:1"></span>
+      <button class="btn" id="shuffleBtn">↻</button>
+    </div>
+
+    <div class="row" style="margin-top:10px">
+      <input
+        id="q"
+        class="btn"
+        style="flex:1; text-align:left"
+        placeholder="検索（例: 鶏 / にんにく / 15分 / 中華）"
+      />
+      <button class="btn" id="clearBtn">✕</button>
+    </div>
+
+    <div class="row" style="margin-top:10px">
+      <div class="sub" id="screenTitle">All</div>
+      <div class="count" id="screenCount"></div>
+    </div>
+  </div>
+</header>
+
+<main class="wrap">
+  <div id="errorBox" class="error hidden"></div>
+  <div id="list" class="grid" aria-live="polite"></div>
+
+  <footer>
+    <div class="muted">Tip: iPhone Safari → 共有 → <span class="mono">ホーム画面に追加</span></div>
+  </footer>
+</main>
+
+<script>
+  // =========================
+  // Utilities
+  // =========================
+  function isStr(x) { return typeof x === "string"; }
+  function nonEmptyStr(x) { return isStr(x) && x.trim().length > 0; }
+
+  function escapeHtml(s) {
+    return String(s)
+      .replaceAll("&", "&amp;")
+      .replaceAll("<", "&lt;")
+      .replaceAll(">", "&gt;")
+      .replaceAll('"', "&quot;")
+      .replaceAll("'", "&#039;");
+  }
+
+  function escapeRegExp(s) {
+    return String(s).replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
+  }
+
+  let QUERY = "";
+  function setQuery(v) { QUERY = (v || "").trim(); }
+
+  function highlightIfNeeded(text) {
+    const q = (QUERY || "").trim();
+    if (q.length < 2) return escapeHtml(text);
+    const re = new RegExp(escapeRegExp(q), "ig");
+    let s = String(text).replace(re, m => `__HL_O__${m}__HL_C__`);
+    s = escapeHtml(s);
+    s = s.replaceAll("__HL_O__", '<mark class="hl">').replaceAll("__HL_C__", "</mark>");
+    return s;
+  }
+
+  function normalizeText(v) {
+    if (Array.isArray(v)) return v.map(x => (typeof x === "string" ? x.trim() : "")).filter(Boolean);
+    if (typeof v === "string") {
+      const s = v.trim();
+      return s ? [s] : [];
+    }
+    return [];
+  }
+
+  function renderTextBlock(label, lines, className = "txt") {
+    if (!lines || lines.length === 0) return "";
+    if (lines.length === 1) {
+      return `
+        <div class="label">${escapeHtml(label)}</div>
+        <p class="${className}">${highlightIfNeeded(lines[0])}</p>
+      `;
+    }
+    return `
+      <div class="label">${escapeHtml(label)}</div>
+      <ul class="${className}" style="margin:6px 0 0; padding-left:18px; line-height:1.5;">
+        ${lines.map(x => `<li>${highlightIfNeeded(x)}</li>`).join("")}
+      </ul>
+    `;
+  }
+  // =========================
+  // Hash (open recipe)
+  // =========================
+  function getOpenIdFromHash() {
+    const h = (location.hash || "").replace(/^#/, "");
+    if (!h) return "";
+    const params = new URLSearchParams(h);
+    const id = params.get("id");
+    return nonEmptyStr(id) ? id : "";
+  }
+
+  function setOpenIdToHash(id) {
+    if (!nonEmptyStr(id)) {
+      history.replaceState(null, "", location.pathname + location.search);
+      return;
+    }
+    const params = new URLSearchParams();
+    params.set("id", id);
+    location.hash = params.toString();
+  }
+
+  // =========================
+  // Favorites (★)
+  // =========================
+  const LS_FAV = "rv_favorites"; // string[] of ids
+
+  function loadFav() {
+    try {
+      const a = JSON.parse(localStorage.getItem(LS_FAV) || "[]");
+      return Array.isArray(a) ? a.filter(nonEmptyStr) : [];
+    } catch {
+      return [];
+    }
+  }
+
+  function saveFav(ids) {
+    localStorage.setItem(LS_FAV, JSON.stringify(ids));
+  }
+
+  function hasFav(id) {
+    return loadFav().includes(id);
+  }
+
+  function toggleFav(id) {
+    const ids = loadFav();
+    const i = ids.indexOf(id);
+    if (i >= 0) ids.splice(i, 1);
+    else ids.push(id);
+    saveFav(ids);
+    return ids.includes(id);
+  }
+
+  // =========================
+  // Notes (per-device memo)
+  // =========================
+  const LS_NOTES = "rv_notes"; // { [id]: string }
+
+  function loadNotes() {
+    try {
+      const o = JSON.parse(localStorage.getItem(LS_NOTES) || "{}");
+      return (o && typeof o === "object" && !Array.isArray(o)) ? o : {};
+    } catch {
+      return {};
+    }
+  }
+
+  function saveNotes(o) {
+    localStorage.setItem(LS_NOTES, JSON.stringify(o));
+  }
+
+  function getNote(id) {
+    const o = loadNotes();
+    return (typeof o[id] === "string") ? o[id] : "";
+  }
+
+  function setNote(id, text) {
+    const o = loadNotes();
+    o[id] = String(text || "");
+    saveNotes(o);
+  }
+
+  // =========================
+  // Data validation
+  // =========================
+  function isNum(x) {
+    return typeof x === "number" && Number.isFinite(x);
+  }
+
+  function validateRecipes(data) {
+    const errors = [];
+    if (!Array.isArray(data)) {
+      return { ok: false, errors: ["recipes.json is not an array"] };
+    }
+
+    const seenId = new Map();
+    const seenSid = new Map();
+    const sidRe = /^\d{4}-\d{5}$/;
+
+    data.forEach((r, i) => {
+      const prefix = `#${i + 1}`;
+
+      if (!r || typeof r !== "object" || Array.isArray(r)) {
+        errors.push(`${prefix}: recipe is not an object`);
+        return;
+      }
+
+      if (!nonEmptyStr(r.id)) errors.push(`${prefix}: id is missing/empty`);
+      if (!nonEmptyStr(r.sid)) errors.push(`${prefix}: sid is missing/empty`);
+      if (!nonEmptyStr(r.title)) errors.push(`${prefix}: title is missing/empty`);
+
+      if (nonEmptyStr(r.sid) && !sidRe.test(r.sid)) {
+        errors.push(`${prefix} (${r.id || "no-id"}): sid must match YYYY-00000`);
+      }
+
+      if (nonEmptyStr(r.id)) {
+        if (seenId.has(r.id)) {
+          errors.push(`${prefix}: duplicate id "${r.id}"`);
+        } else seenId.set(r.id, true);
+      }
+
+      if (nonEmptyStr(r.sid)) {
+        if (seenSid.has(r.sid)) {
+          errors.push(`${prefix}: duplicate sid "${r.sid}"`);
+        } else seenSid.set(r.sid, true);
+      }
+
+      if (r.tags !== undefined) {
+        if (!Array.isArray(r.tags) || !r.tags.every(nonEmptyStr)) {
+          errors.push(`${prefix}: tags must be string[]`);
+        }
+      }
+
+      if (r.servings !== undefined && !(isNum(r.servings) && r.servings > 0)) {
+        errors.push(`${prefix}: servings must be positive number`);
+      }
+
+      if (r.ingredients !== undefined) {
+        if (!Array.isArray(r.ingredients)) {
+          errors.push(`${prefix}: ingredients must be array`);
+        } else {
+          r.ingredients.forEach((ing, j) => {
+            if (!ing || typeof ing !== "object") {
+              errors.push(`${prefix}: ingredient #${j + 1} invalid`);
+              return;
+            }
+            if (!nonEmptyStr(ing.name)) {
+              errors.push(`${prefix}: ingredient #${j + 1} name required`);
+            }
+            if (ing.amount !== undefined && !(isNum(ing.amount) && ing.amount >= 0)) {
+              errors.push(`${prefix}: ingredient #${j + 1} amount must be number`);
+            }
+          });
+        }
+      }
+
+      ["steps", "tips"].forEach(k => {
+        if (r[k] !== undefined) {
+          if (!Array.isArray(r[k]) || !r[k].every(nonEmptyStr)) {
+            errors.push(`${prefix}: ${k} must be string[]`);
+          }
+        }
+      });
+
+      if (r.nutrition !== undefined) {
+        const n = r.nutrition;
+        if (!n || typeof n !== "object" || Array.isArray(n)) {
+          errors.push(`${prefix}: nutrition must be object`);
+        } else {
+          ["kcal", "p", "f", "c", "salt"].forEach(k => {
+            if (n[k] !== undefined && !(isNum(n[k]) && n[k] >= 0)) {
+              errors.push(`${prefix}: nutrition.${k} must be number`);
+            }
+          });
+        }
+      }
+
+      if (r.sources !== undefined) {
+        if (!Array.isArray(r.sources)) {
+          errors.push(`${prefix}: sources must be array`);
+        }
+      }
+    });
+
+    return { ok: errors.length === 0, errors };
+  }
+
+  // =========================
+  // Load recipes.json
+  // =========================
+  let RECIPES = [];
+
+  async function loadRecipes() {
+    try {
+      const VERSION = "2026-01-07";
+      const res = await fetch(`./recipes.json?v=${VERSION}`, { cache: "no-store" });
+      if (!res.ok) throw new Error(`HTTP ${res.status}`);
+      const data = await res.json();
+
+      const v = validateRecipes(data);
+      if (!v.ok) {
+        RECIPES = [];
+        showError("recipes.json に問題があります:\n" + v.errors.map(e => "・" + e).join("\n"));
+        return;
+      }
+
+      RECIPES = data;
+      hideError();
+    } catch (e) {
+      console.error(e);
+      showError(
+        "レシピデータの読み込みに失敗しました。\n" +
+        "・recipes.json の存在\n" +
+        "・JSON構文\n" +
+        "・GitHub Pagesの反映\n" +
+        "を確認してください。"
+      );
+    }
+  }
+
+  // =========================
+  // View state
+  // =========================
+  const LS_VIEW = "rv_view"; // all | fav
+
+  function getView() {
+    return localStorage.getItem(LS_VIEW) || "all";
+  }
+
+  function setView(v) {
+    localStorage.setItem(LS_VIEW, v);
+  }
+  // =========================
+  // Search / filter
+  // =========================
+  function recipeToHaystack(r) {
+    const ing = (r.ingredients || [])
+      .map(x => [x.name, x.amount, x.unit].filter(Boolean).join(" "))
+      .join(" ");
+
+    const src = (r.sources || [])
+      .map(s => [s.type, s.title, s.author, s.publisher, s.isbn, s.url, s.note].filter(Boolean).join(" "))
+      .join(" ");
+
+    const nut = r.nutrition
+      ? Object.entries(r.nutrition).map(([k, v]) => `${k}:${v}`).join(" ")
+      : "";
+
+    return [
+      r.id, r.sid, r.title,
+      ...(r.tags || []),
+      r.servings,
+      ing,
+      ...(r.steps || []),
+      ...(r.tips || []),
+      nut,
+      src,
+    ]
+      .filter(Boolean)
+      .join(" ")
+      .toLowerCase();
+  }
+
+  function filterByQuery(arr) {
+    if (!QUERY) return arr;
+    const q = QUERY.toLowerCase();
+    return arr.filter(r => recipeToHaystack(r).includes(q));
+  }
+
+  // =========================
+  // UI: screen count
+  // =========================
+  function setScreenCount(visible) {
+    const total = Array.isArray(RECIPES) ? RECIPES.length : 0;
+    const v = Math.max(0, Number(visible) || 0);
+
+    const titleEl = document.getElementById("screenTitle");
+    if (titleEl) {
+      if (QUERY) titleEl.textContent = "検索結果";
+      else titleEl.textContent = (getView() === "fav") ? "★ お気に入り" : "All";
+    }
+
+    const countEl = document.getElementById("screenCount");
+    if (countEl) {
+      const favCount = loadFav().length;
+      countEl.textContent = total ? `${v} / ${total}${favCount ? `（★${favCount}）` : ""}` : "";
+    }
+  }
+
+  // =========================
+  // Render helpers
+  // =========================
+  function fmtNutrition(n, servings) {
+    if (!n) return "";
+    const per = n.per || "serving"; // serving | recipe
+    const unitLabel = (per === "recipe") ? "レシピ全量" : "1人前";
+    const sv = (typeof servings === "number" && servings > 0) ? `（${servings}人分）` : "";
+
+    const parts = [];
+    if (typeof n.kcal === "number") parts.push(`kcal ${n.kcal}`);
+    if (typeof n.p === "number") parts.push(`P ${n.p}g`);
+    if (typeof n.f === "number") parts.push(`F ${n.f}g`);
+    if (typeof n.c === "number") parts.push(`C ${n.c}g`);
+    if (typeof n.salt === "number") parts.push(`塩 ${n.salt}g`);
+
+    return `${unitLabel}${sv}: ${parts.join(" / ")}`;
+  }
+
+  function renderSources(sources) {
+    const src = Array.isArray(sources) ? sources : [];
+    if (!src.length) return "";
+
+    const lines = src.map(s => {
+      const type = s.type ? `[${s.type}]` : "";
+      const main = [s.title, s.author, s.publisher, s.isbn].filter(Boolean).join(" / ");
+      const note = s.note ? `（${s.note}）` : "";
+      const url = s.url ? s.url : "";
+
+      const head = [type, main].filter(Boolean).join(" ");
+      const line = (head + (note ? " " + note : "")).trim();
+      if (url) return `${line}\n${url}`.trim();
+      return line;
+    }).filter(Boolean);
+
+    return renderTextBlock("出典", lines, "txt mono");
+  }
+
+  function findRecipeById(id) {
+    return RECIPES.find(r => r && r.id === id) || null;
+  }
+
+  // =========================
+  // Render card
+  // =========================
+  function renderPills(pills) {
+    const ok = (pills || []).map(x => (typeof x === "string" ? x.trim() : "")).filter(Boolean);
+    if (!ok.length) return "";
+    return ok.map(x => `<span class="pill">${escapeHtml(x)}</span>`).join("");
+  }
+
+  function renderCard(r, openId, mode) {
+    const starred = hasFav(r.id);
+    const starChar = starred ? "★" : "☆";
+
+    const isOpen = (mode === "single") || (openId === r.id);
+    const showDetails = isOpen;
+
+    const pills = [];
+    if (typeof r.servings === "number" && r.servings > 0) pills.push(`${r.servings}人分`);
+    if (Array.isArray(r.tags)) pills.push(...r.tags);
+
+    const ingLines = (r.ingredients || []).map(x => {
+      const a = (x.amount !== undefined) ? String(x.amount) : "";
+      const u = (x.unit !== undefined) ? String(x.unit) : "";
+      const right = [a, u].filter(Boolean).join("");
+      return right ? `${x.name}：${right}` : `${x.name}`;
+    });
+
+    const stepsLines = normalizeText(r.steps);
+    const tipsLines = normalizeText(r.tips);
+
+    const noteVal = getNote(r.id);
+
+    const el = document.createElement("section");
+    el.className = "card";
+
+    el.innerHTML = `
+      <div class="row" style="align-items:flex-start">
+        <div style="min-width:0; flex:1">
+          <div class="title title-row">
+            <span>${highlightIfNeeded(r.title || "")}</span>
+            <span class="chev">${isOpen ? "▾" : "▸"}</span>
+          </div>
+
+          <div>${renderPills(pills)}</div>
+
+          <div class="muted" style="margin-top:8px">
+            <span class="mono">${escapeHtml(r.sid || "")}</span>
+            ${r.id ? ` / <span class="mono">${escapeHtml(r.id)}</span>` : ""}
+          </div>
+        </div>
+
+        <div class="right meta">
+          <button class="bm-btn" data-fav="1" aria-label="favorite">${starChar}</button>
+        </div>
+      </div>
+
+      ${showDetails ? `
+        ${renderTextBlock("材料", ingLines, "txt")}
+        ${renderTextBlock("手順", stepsLines, "txt")}
+        ${renderTextBlock("コツ・注意", tipsLines, "txt")}
+        ${r.nutrition ? `<div class="label">栄養</div><p class="txt mono">${escapeHtml(fmtNutrition(r.nutrition, r.servings))}</p>` : ""}
+        ${renderSources(r.sources)}
+
+        <div class="label">メモ（この端末のみ）</div>
+        <textarea class="note" data-note="1" placeholder="例: 次回は醤油を5ml減らす / 唐辛子は半量 / 子ども用は〜">${escapeHtml(noteVal)}</textarea>
+
+        <div class="note-row">
+          <button class="btn" data-save-note="1">メモ保存</button>
+          <button class="btn" data-copy-url="1">このレシピURLをコピー</button>
+        </div>
+        <div class="muted" style="margin-top:6px" data-note-status=""></div>
+      ` : ``}
+    `;
+
+    // open/close by tapping title (list mode)
+    const titleEl = el.querySelector(".title");
+    if (titleEl) {
+      titleEl.style.cursor = "pointer";
+      titleEl.addEventListener("click", () => {
+        const now = getOpenIdFromHash();
+        if (now === r.id) setOpenIdToHash("");
+        else setOpenIdToHash(r.id);
+      });
+    }
+
+    // favorite toggle
+    const favBtn = el.querySelector(".bm-btn");
+    if (favBtn) {
+      favBtn.addEventListener("click", () => {
+        const nowStarred = toggleFav(r.id);
+        favBtn.textContent = nowStarred ? "★" : "☆";
+        // if on fav tab, remove immediately when unstarred
+        if (getView() === "fav" && !nowStarred) render();
+        else setScreenCount(document.querySelectorAll("#list .card").length);
+      });
+    }
+
+    // save note
+    const saveBtn = el.querySelector('[data-save-note="1"]');
+    const ta = el.querySelector('textarea[data-note="1"]');
+    const status = el.querySelector('[data-note-status]');
+    if (saveBtn && ta) {
+      saveBtn.addEventListener("click", () => {
+        setNote(r.id, ta.value || "");
+        if (status) status.textContent = "保存しました";
+        setTimeout(() => { if (status) status.textContent = ""; }, 900);
+      });
+    }
+
+    // copy recipe url
+    const copyBtn = el.querySelector('[data-copy-url="1"]');
+    if (copyBtn) {
+      copyBtn.addEventListener("click", async () => {
+        const url = location.origin + location.pathname + "#id=" + encodeURIComponent(r.id);
+        try {
+          await navigator.clipboard.writeText(url);
+          if (status) status.textContent = "URLをコピーしました";
+        } catch {
+          prompt("コピーできない場合は手動でコピーしてください:", url);
+        }
+        setTimeout(() => { if (status) status.textContent = ""; }, 1200);
+      });
+    }
+
+    return el;
+  }
+  // =========================
+  // Render main
+  // =========================
+  function render() {
+    const list = document.getElementById("list");
+    list.innerHTML = "";
+
+    const openId = getOpenIdFromHash();
+    const view = getView();
+
+    // If hash specifies an id, show that recipe in single mode
+    if (openId) {
+      const r = findRecipeById(openId);
+      if (!r) {
+        list.innerHTML = `<div class="muted">このURLのレシピが見つかりませんでした（id=${escapeHtml(openId)}）</div>`;
+        setScreenCount(0);
+        return;
+      }
+      list.appendChild(renderCard(r, openId, "single"));
+      setScreenCount(1);
+      return;
+    }
+
+    let base = RECIPES.slice();
+
+    if (view === "fav") {
+      const fav = new Set(loadFav());
+      base = base.filter(r => fav.has(r.id));
+    }
+
+    base = filterByQuery(base);
+
+    if (!base.length) {
+      list.innerHTML = `<div class="muted">該当なし。検索語を変えてみてください。</div>`;
+      setScreenCount(0);
+      return;
+    }
+
+    for (const r of base) list.appendChild(renderCard(r, "", "list"));
+    setScreenCount(base.length);
+  }
+
+  // =========================
+  // Events
+  // =========================
+  document.getElementById("tabAll").addEventListener("click", () => {
+    setView("all");
+    document.getElementById("tabAll").classList.add("primary");
+    document.getElementById("tabFav").classList.remove("primary");
+    render();
+  });
+
+  document.getElementById("tabFav").addEventListener("click", () => {
+    setView("fav");
+    document.getElementById("tabFav").classList.add("primary");
+    document.getElementById("tabAll").classList.remove("primary");
+    render();
+  });
+
+  document.getElementById("shuffleBtn").addEventListener("click", () => {
+    // ランダムに1件開く（「今日これ作る？」用）
+    if (!RECIPES.length) return;
+    const arr = filterByQuery(RECIPES.slice());
+    if (!arr.length) return;
+    const pick = arr[Math.floor(Math.random() * arr.length)];
+    if (pick && pick.id) setOpenIdToHash(pick.id);
+  });
+
+  // Search
+  const qEl = document.getElementById("q");
+  const clearEl = document.getElementById("clearBtn");
+
+  qEl.addEventListener("input", () => {
+    setQuery(qEl.value || "");
+    render();
+  });
+
+  clearEl.addEventListener("click", () => {
+    qEl.value = "";
+    setQuery("");
+    render();
+    qEl.focus();
+  });
+
+  // Share button (current recipe url or app url)
+  document.getElementById("shareBtn").addEventListener("click", async () => {
+    const openId = getOpenIdFromHash();
+    const url = openId
+      ? (location.origin + location.pathname + "#id=" + encodeURIComponent(openId))
+      : (location.origin + location.pathname);
+
+    try {
+      await navigator.clipboard.writeText(url);
+      alert(openId ? "このレシピURLをコピーしました" : "アプリURLをコピーしました");
+    } catch {
+      prompt("コピーできない場合は手動でコピーしてください:", url);
+    }
+  });
+
+  // Hash change => rerender (open/close)
+  window.addEventListener("hashchange", () => render());
+
+  // =========================
+  // PWA: service worker
+  // =========================
+  if ("serviceWorker" in navigator) {
+    window.addEventListener("load", async () => {
+      try { await navigator.serviceWorker.register("./sw.js"); } catch (e) {}
+    });
+  }
+
+  // =========================
+  // Boot
+  // =========================
+  (async () => {
+    // init tabs UI
+    const view = getView();
+    document.getElementById("tabAll").classList.toggle("primary", view === "all");
+    document.getElementById("tabFav").classList.toggle("primary", view === "fav");
+
+    await loadRecipes();
+    render();
+  })();
+</script>
+</body>
+</html>
