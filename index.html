@@ -557,7 +557,9 @@
 
     return `${unitLabel}${sv}: ${parts.join(" / ")}`;
   }
-
+function findRecipeById(id) {
+  return RECIPES.find(r => r && r.id === id) || null;
+}
   function renderSources(sources) {
   const src = Array.isArray(sources) ? sources : [];
   if (!src.length) return "";
