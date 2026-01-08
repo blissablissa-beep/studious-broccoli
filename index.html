@@ -170,6 +170,32 @@
 
 <script>
   // =========================
+  // Error overlay
+  // =========================
+  function showError(msg) {
+    const box = document.getElementById("errorBox");
+    if (!box) return;
+
+    const htmlMsg = escapeHtml(msg).replaceAll("\n", "<br>");
+    box.innerHTML = `
+      <div>${htmlMsg}</div>
+      <div class="err-actions">
+        <button class="err-btn" id="reloadBtn">再読み込み</button>
+      </div>
+    `;
+    box.classList.remove("hidden");
+
+    const btn = document.getElementById("reloadBtn");
+    if (btn) btn.onclick = () => location.reload();
+  }
+
+  function hideError() {
+    const box = document.getElementById("errorBox");
+    if (!box) return;
+    box.classList.add("hidden");
+    box.innerHTML = "";
+  }
+  // =========================
   // Utilities
   // =========================
   function isStr(x) { return typeof x === "string"; }
