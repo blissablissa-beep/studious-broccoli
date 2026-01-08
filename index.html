@@ -560,6 +560,13 @@
 function findRecipeById(id) {
   return RECIPES.find(r => r && r.id === id) || null;
 }
+
+function safeHref(url) {
+  const u = String(url || "").trim();
+  if (/^https?:\/\//i.test(u)) return u;
+  return ""; // http/https以外はリンク化しない
+}
+
   function renderSources(sources) {
   const src = Array.isArray(sources) ? sources : [];
   if (!src.length) return "";
@@ -575,9 +582,15 @@ function findRecipeById(id) {
     let line = [type, main, note].filter(Boolean).join(" ");
 
     if (s.url) {
-      const safeUrl = escapeHtml(s.url);
-      line += `<br><a href="${safeUrl}" target="_blank" rel="noopener">${safeUrl}</a>`;
-    }
+  const href = safeHref(s.url);
+  const label = escapeHtml(s.url);
+
+  if (href) {
+    line += `<br><a href="${href}" target="_blank" rel="noopener">🔗 ${label}</a>`;
+  } else {
+    line += `<br>${label}`;
+  }
+}
     return `<li>${line}</li>`;
   }).join("");
 
