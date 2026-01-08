@@ -24,10 +24,10 @@
     "nutrition": { "per": "serving", "kcal": 520, "p": 28, "f": 36, "c": 18, "salt": 3.2 },
     "sources": [
       {
-        "type": "video",
-        "title": "酸豆角炒肉末の作り方（参考）",
-        "url": "https://example.com/video",
-        "note": "この動画をベースに家庭向けに調整"
+        "type": "web",
+        "title": "とことん知りたい！酸豆角（スァンドウジャオ）の作り方総まとめ＆酸豆角炒肉末レシピ",
+        "url": "https://80c.jp/recipe/20210812-1.html",
+        "note": "このサイトをベースに家庭向けに調整"
       },
       {
         "type": "book",
