@@ -132,6 +132,7 @@
         <h1 id="appTitle">Recipe Vault</h1>
         <div class="sub" id="appSub">家庭用 / PWA / レシピ共有（#id=で個別URL）</div>
       </div>
+      <button class="btn" id="backBtn" style="display:none">←</button>
       <button class="btn" id="shareBtn" title="今開いているレシピURLをコピー">共有</button>
     </div>
 
@@ -744,10 +745,12 @@ function safeHref(url) {
       if (!r) {
         list.innerHTML = `<div class="muted">このURLのレシピが見つかりませんでした（id=${escapeHtml(openId)}）</div>`;
         setScreenCount(0);
+        updateBackBtn();
         return;
       }
       list.appendChild(renderCard(r, openId, "single"));
       setScreenCount(1);
+      updateBackBtn();
       return;
     }
 
@@ -763,11 +766,13 @@ function safeHref(url) {
     if (!base.length) {
       list.innerHTML = `<div class="muted">該当なし。検索語を変えてみてください。</div>`;
       setScreenCount(0);
+      updateBackBtn();
       return;
     }
 
     for (const r of base) list.appendChild(renderCard(r, "", "list"));
     setScreenCount(base.length);
+    updateBackBtn();
   }
 
   // =========================
@@ -811,7 +816,15 @@ function safeHref(url) {
     render();
     qEl.focus();
   });
+const backBtn = document.getElementById("backBtn");
+if (backBtn) {
+  backBtn.addEventListener("click", () => setOpenIdToHash(""));
+}
 
+function updateBackBtn() {
+  const openId = getOpenIdFromHash();
+  if (backBtn) backBtn.style.display = openId ? "inline-block" : "none";
+}
   // Share button (current recipe url or app url)
   document.getElementById("shareBtn").addEventListener("click", async () => {
     const openId = getOpenIdFromHash();
@@ -828,7 +841,10 @@ function safeHref(url) {
   });
 
   // Hash change => rerender (open/close)
-  window.addEventListener("hashchange", () => render());
+  window.addEventListener("hashchange", () => {
+  render();
+  updateBackBtn();
+});
 
   // =========================
   // PWA: service worker
@@ -850,6 +866,7 @@ function safeHref(url) {
 
     await loadRecipes();
     render();
+    updateBackBtn();
   })();
 </script>
 </body>
