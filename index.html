@@ -264,14 +264,17 @@
   }
 
   function setOpenIdToHash(id) {
-    if (!nonEmptyStr(id)) {
-      history.replaceState(null, "", location.pathname + location.search);
-      return;
-    }
-    const params = new URLSearchParams();
-    params.set("id", id);
-    location.hash = params.toString();
+  if (!nonEmptyStr(id)) {
+    history.replaceState(null, "", location.pathname + location.search);
+    // replaceState は hashchange が発火しないので、手動で再描画
+    render();
+    updateBackBtn();
+    return;
   }
+  const params = new URLSearchParams();
+  params.set("id", id);
+  location.hash = params.toString(); // これは hashchange が発火 → render() が走る
+}
 
   // =========================
   // Favorites (★)
