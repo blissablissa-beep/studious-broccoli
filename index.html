@@ -559,27 +559,33 @@
   }
 
   function renderSources(sources) {
-    const src = Array.isArray(sources) ? sources : [];
-    if (!src.length) return "";
+  const src = Array.isArray(sources) ? sources : [];
+  if (!src.length) return "";
 
-    const lines = src.map(s => {
-      const type = s.type ? `[${s.type}]` : "";
-      const main = [s.title, s.author, s.publisher, s.isbn].filter(Boolean).join(" / ");
-      const note = s.note ? `（${s.note}）` : "";
-      const url = s.url ? s.url : "";
+  const html = src.map(s => {
+    const type = s.type ? `[${escapeHtml(s.type)}]` : "";
+    const main = [s.title, s.author, s.publisher, s.isbn]
+      .filter(Boolean)
+      .map(escapeHtml)
+      .join(" / ");
+    const note = s.note ? `（${escapeHtml(s.note)}）` : "";
 
-      const head = [type, main].filter(Boolean).join(" ");
-      const line = (head + (note ? " " + note : "")).trim();
-      if (url) return `${line}\n${url}`.trim();
-      return line;
-    }).filter(Boolean);
+    let line = [type, main, note].filter(Boolean).join(" ");
 
-    return renderTextBlock("出典", lines, "txt mono");
-  }
+    if (s.url) {
+      const safeUrl = escapeHtml(s.url);
+      line += `<br><a href="${safeUrl}" target="_blank" rel="noopener">${safeUrl}</a>`;
+    }
+    return `<li>${line}</li>`;
+  }).join("");
 
-  function findRecipeById(id) {
-    return RECIPES.find(r => r && r.id === id) || null;
-  }
+  return `
+    <div class="label">出典</div>
+    <ul class="txt mono" style="margin:6px 0 0; padding-left:18px; line-height:1.5;">
+      ${html}
+    </ul>
+  `;
+}
 
   // =========================
   // Render card
