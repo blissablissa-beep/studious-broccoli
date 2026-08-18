@@ -448,7 +448,7 @@
 
   async function loadRecipes() {
     try {
-      const VERSION = "2026-01-07";
+      const VERSION = "2026-08-18";
       const res = await fetch(`./recipes.json?v=${VERSION}`, { cache: "no-store" });
       if (!res.ok) throw new Error(`HTTP ${res.status}`);
       const data = await res.json();
